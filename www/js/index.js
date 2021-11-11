@@ -20,6 +20,26 @@ function onOrientationChange(e) {
     }
 }
 
+var slideIndex = 0;
+showSlides();
+
+function showSlides() {
+  var i;
+  var slides = document.getElementsByClassName("mySlides");
+  var dots = document.getElementsByClassName("dot");
+  for (i = 0; i < slides.length; i++) {
+    slides[i].style.display = "none";  
+  }
+  slideIndex++;
+  if (slideIndex > slides.length) {slideIndex = 1}    
+  for (i = 0; i < dots.length; i++) {
+    dots[i].className = dots[i].className.replace(" active", "");
+  }
+  slides[slideIndex-1].style.display = "block";  
+  dots[slideIndex-1].className += " active";
+  setTimeout(showSlides, 2000); // Change image every 2 seconds
+}
+
 // To detect whether users open applications on mobile phones or browsers.
 if (navigator.userAgent.match(/(iPhone|iPod|iPad|Android|BlackBerry)/)) {
     $(document).on('deviceready', onDeviceReady);
@@ -53,9 +73,9 @@ function onDeviceReady() {
                                                          City TEXT NOT NULL,
                                                          District TEXT NOT NULL,
                                                          Ward TEXT NOT NULL,
-                                                         Bedroom TEXT NOT NULL,
+                                                         Bedroom INTEGER NOT NULL,
                                                          Date TEXT NOT NULL,
-                                                         Price TEXT NOT NULL,
+                                                         Price INTERER NOT NULL,
                                                          Furnituretype TEXT NOT NULL,
                                                          Notes TEXT NOT NULL,
                                                          Reporter TEXT NOT NULL)`;
@@ -84,16 +104,23 @@ $(document).on('vclick', '#page-create #frm-confirm #btn-create', registerAccomm
 function confirmAccommodation(e) {
     e.preventDefault();
 
+    var propertytypeText=document.getElementById("propertytype");
+    var cityText = document.getElementById("city");
+    var districtText = document.getElementById("district");
+    var wardText = document.getElementById("ward");
+    var bedroomText = document.getElementById("bedroom");
+    var furnitureText = document.getElementById("furnituretype");
+
     // Get user's input.
     var propertyname = $('#page-create #frm-register #propertyname').val();
-    var propertytype = $('#page-create #frm-register #propertytype').val();
-    var city = $('#page-create #frm-register #city').val();
-    var district = $('#page-create #frm-register #district').val();
-    var ward = $('#page-create #frm-register #ward').val();
-    var bedroom = $('#page-create #frm-register #bedroom').val();
+    var propertytype = propertytypeText.options[propertytypeText.selectedIndex].text;
+    var city = cityText.options[cityText.selectedIndex].text;
+    var district = districtText.options[districtText.selectedIndex].text;
+    var ward = wardText.options[wardText.selectedIndex].text;
+    var bedroom = bedroomText.options[bedroomText.selectedIndex].text;
     var date = $('#page-create #frm-register #date').val();
     var price = $('#page-create #frm-register #price').val();
-    var furnituretype = $('#page-create #frm-register #furnituretype').val();
+    var furnituretype = furnitureText.options[furnitureText.selectedIndex].text;
     var notes = $('#page-create #frm-register #notes').val();
     var reporter = $('#page-create #frm-register #reporter').val();
 
@@ -180,7 +207,7 @@ function showList() {
             log(`Get list of accounts successfully.`);
 
             // Prepare the list of accounts.
-            var listAccommodation = `<ul id='list-account' data-role='listview' data-filter='true' data-filter-placeholder='Search accounts...'
+            var listAccommodation = `<ul id='list-accommodation' data-role='listview' data-filter='true' data-filter-placeholder='Search accounts...'
                                                      data-corners='false' class='ui-nodisc-icon ui-alt-icon'>`;
             for (let accommodation of result.rows) {
                 listAccommodation += `<li><a data-details='{"Id" : ${accommodation.Id}}'>
@@ -192,7 +219,7 @@ function showList() {
             listAccommodation += `</ul>`;
 
             // Add list to UI.
-            $('#list-account').empty().append(listAccommodation).listview('refresh').trigger('create');
+            $('#list-accommodation').empty().append(listAccommodation).listview('refresh').trigger('create');
 
             log(`Show list of accounts successfully.`);
         }
@@ -200,13 +227,13 @@ function showList() {
 }
 
 // Save Account Id.
-$(document).on('vclick', '#list-account li a', function (e) {
+$(document).on('vclick', '#list-accommodation li a', function (e) {
     e.preventDefault();
 
     var id = $(this).data('details').Id;
     localStorage.setItem('currentAccountId', id);
 
-    $.mobile.navigate('#page-detail', { transition: 'none' });
+    $.mobile.navigate('#page-detail', { transition:'' });
 });
 
 // Show Account Details.
@@ -220,7 +247,7 @@ function showDetail() {
         tx.executeSql(query, [id], transactionSuccess, transactionError);
 
         function transactionSuccess(tx, result) {
-            var errorMessage = 'Account not found.';
+            var errorMessage = 'Acc not found.';
             var propertyname = errorMessage;
             var propertytype = errorMessage;
             var city = errorMessage;
@@ -258,6 +285,7 @@ function showDetail() {
             }
 
             $('#page-detail #id').val(id);
+            
             $('#page-detail #propertyname').val(propertyname);
             $('#page-detail #propertytype').val(propertytype);
             $('#page-detail #city').val(city);
@@ -273,9 +301,12 @@ function showDetail() {
             // $('#page-detail #password').val(password);
             
             showComment();
+            
         }
     });
 }
+
+
 
 // Delete Account.
 $(document).on('submit', '#page-detail #frm-delete', deleteAccommodation);
@@ -317,6 +348,13 @@ $(document).on('vclick', '#page-detail #frm-update #btn-update', updateAccommoda
 function updateAccommodation(e){
     e.preventDefault();
 
+    // var propertytypeText=document.getElementById("propertytype");
+    // var cityText = $('#page-detail #frm-update #city').val();
+    // var districtText = document.getElementById("district");
+    // var wardText = document.getElementById("ward");
+    // var bedroomText = document.getElementById("bedroom");
+    // var furnitureText = document.getElementById("furnituretype");
+
     var id = localStorage.getItem('currentAccountId');
     var propertyname = $('#page-detail #frm-update #propertyname').val();
     var propertytype = $('#page-detail #frm-update #propertytype').val();
@@ -330,13 +368,11 @@ function updateAccommodation(e){
     var notes = $('#page-detail #frm-update #notes').val();
     var reporter = $('#page-detail #frm-update #reporter').val();
 
-    log('into update');
-    
+    //document.getElementById("furnituretype").value = $('#page-detail #furnituretype').val(furnituretype);
     db.transaction(function (tx) {
-        log('hello from there');
         var query = 'UPDATE Accommodation SET Propertyname = ?, Propertytype=?, City=?, District=?, Ward=?, Bedroom=?, Date=?, Price=?, Furnituretype=?, Notes=?, Reporter=? WHERE Id = ?';
         
-        tx.executeSql(query, [id,propertyname, propertytype, city, district, ward, bedroom, date, price, furnituretype, notes, reporter], transactionSuccess, transactionError);
+        tx.executeSql(query, [propertyname, propertytype, city, district, ward, bedroom, date, price, furnituretype, notes, reporter, id], transactionSuccess, transactionError);
 
         function transactionSuccess(tx, result) {
             log(`Update accommodation '${id}' successfully.`);
@@ -346,6 +382,48 @@ function updateAccommodation(e){
     });
 }
 
+//Search
+$(document).on('submit', '#page-search #frm-search', search);
+function search(e){
+    e.preventDefault();
+
+    var propertyname = $('#page-search #frm-search #propertyname').val();
+    var price = $('#page-search #frm-search #price').val();
+
+    db.transaction(function (tx) {
+        var query = `SELECT Id, Propertyname, Price FROM Accommodation WHERE`;
+        
+        if (propertyname){
+            query+=` Propertyname LIKE "%${propertyname}%"   AND`;
+        }
+
+        if(price){
+            query += ` Price >= ${price}   AND`;
+        }
+        
+        query= query.substring(0, query.length -6);
+
+        tx.executeSql(query, [], transactionSuccess, transactionError);
+
+        function transactionSuccess(tx, result) {
+            log(`Get list of accommodation successfully.`);
+
+            // Prepare the list of accounts.
+            var listAccommodation = `<ul id='list-accomm' data-role='listview' class='ui-nodisc-icon ui-alt-icon'>`;
+            for (let accommodation of result.rows) {
+                listAccommodation += `<li><a data-details='{"Id" : ${accommodation.Id}}'>
+                                    <img src='img/boyscout_logo.jpg'>
+                                    <h3>Property Name: ${accommodation.Propertyname}</h3>
+                                    <p>Price: ${accommodation.Price}</p>
+                                </a></li>`;
+            }
+            listAccommodation += `</ul>`;
+
+            // Add list to UI.
+            $('#page-search #list-accomm').empty().append(listAccommodation).listview('refresh').trigger('create');
+        }
+    });
+}
 
 // Add Comment.
 $(document).on('submit', '#page-detail #frm-comment', addComment);
@@ -399,6 +477,7 @@ function showComment() {
     });
 }
 
+//Select address
 $(document).on('pagebeforeshow', '#page-create', function(){
     importCity('#page-create #frm-register');
     importDistrict('#page-create #frm-register');
@@ -473,9 +552,181 @@ function importWard(form, selectedId=-1){
     });
 }
 
+// var cityId = document.getElementById("city");
+// var districtId = document.getElementById("district");
+// var wardId = document.getElementById("ward");
 
-let header = document.querySelector('.hamburger-menu');
-let hamburgerMenu =document.querySelector('.hamburger-menu');
-hamburgerMenu.addEventListener('click', function(){
-    header.classList.toggle('menu-open');
-})
+// function show(){
+//     var strCity = cityId.selectedIndex;
+//     var strDistrict = districtId.selectedIndex;
+//     var strWard = wardId.selectedIndex;
+//     console.log( strCity);
+// //   console.log( strDistrict);
+// //   console.log( strWard);
+
+// }
+// cityId.onchange=show;
+// districtId.onchange=show;
+// wardId.onchange=show;
+// show();
+
+
+
+
+
+//em noi, nhieu khi phai create khach san moi thi no moi chinh xac dc
+//why/cancel ko duoc
+
+
+// import address update
+//cai nay ne
+$(document).on('pagebeforeshow', '#page-detail', function(){
+    importCity('#page-detail #frm-update');
+    importDistrict('#page-detail #frm-update');
+    importWard('#page-detail #frm-update');
+});
+
+$(document).on('change', '#page-detail #frm-update #city', function(){
+    importDistrict('#page-detail #frm-update');
+    importWard('#page-detail #frm-update');
+});
+
+$(document).on('change', '#page-detail #frm-update #district', function(){
+    importWard('#page-detail #frm-update');
+});
+
+// neu ma update thi cai importCity cau query cua be se giong ben duoi
+
+function importCity(form){
+    db.transaction(function (tx) {
+        var query = 'SELECT * FROM City ORDER BY Name';
+        var city = 'SELECT City FROM Accommodation WHERE Id = ?';
+        //var citySelected = $
+        tx.executeSql(city, [id], transactionSuccess, transactionError);
+
+        function transactionSuccess(tx, result) {
+            var errorMessage = 'Acc not found.';
+            var city = errorMessage;
+
+            if (result.rows[0] != null) {
+                log(`Get details of accommodation '${id}' successfully.`);
+                city = result.rows[0].City;
+            }
+            else {
+                log(errorMessage, ERROR);
+
+                $('#page-detail #btn-update').addClass('ui-disabled');
+                $('#page-detail #btn-delete-confirm').addClass('ui-disabled');
+            }  
+        }
+        var val=$('#page-detail #city').val();
+        console.log('value la'+val);
+
+        tx.executeSql(query, [], transactionSuccess, transactionError);
+
+        function transactionSuccess(tx, result) {
+            var optionList=`<option value='-1'>Select City</option>`;
+            
+            for (let item of result.rows){
+                    optionList+= `<option value='${item.Id}' ${item.Name==val ? 'selected':''} >${item.Name}</option>`;
+                    //console.log(item.Id);
+            }
+           
+            $(`${form} #city`).html(optionList);
+            $(`${form} #city`).selectmenu('refresh', true);
+        }
+    });
+}
+//em vua xoa selectedId cho nay selectedId=-1 co van de j voi cai nay 0
+// neu maf update thi
+//Thi saoa
+function importDistrict(form){
+    var name = $(`${form} #city option:selected`).text();
+    var id = $(`${form} #city`).val();
+    
+
+    db.transaction(function (tx) {
+        var query = 'SELECT * FROM District WHERE CityId = ? ORDER BY Name';
+
+        var district = 'SELECT District FROM Accommodation WHERE City = ?';
+
+        tx.executeSql(district, [city], transactionSuccess, transactionError);
+
+        function transactionSuccess(tx, result) {
+            var errorMessage = 'Acc not found.';
+            var district = errorMessage;
+
+            if (result.rows[0] != null) {
+                log(`Get details of accommodation '${id}' successfully.`);
+                district = result.rows[0].District;
+                console.log('nay thi sao'+district)
+            }
+            else {
+                log(errorMessage, ERROR);
+
+                $('#page-detail #btn-update').addClass('ui-disabled');
+                $('#page-detail #btn-delete-confirm').addClass('ui-disabled');
+            }  
+        }
+        var districtSelected = $('#page-detail #district').val();
+        console.log('value la'+districtSelected);
+
+        tx.executeSql(query, [id], transactionSuccess, transactionError);
+
+        function transactionSuccess(tx, result) {
+            var optionList=`<option value='-1'>Select District</option>`;
+            
+            for (let item of result.rows){
+                    optionList+= `<option value='${item.Id}' ${item.Name==districtSelected ? 'selected':''}>${item.Name}</option>`;
+
+            }
+          
+            $(`${form} #district`).html(optionList);
+            $(`${form} #district`).selectmenu('refresh', true);
+        }
+    });
+}
+
+function importWard(form){
+    var id = $(`${form} #district`).val();
+    
+
+    db.transaction(function (tx) {
+        var query = 'SELECT * FROM Ward WHERE DistrictId = ? ORDER BY Name';
+        var ward = 'SELECT Ward FROM Accommodation WHERE District = ?';
+        //var citySelected = $
+        tx.executeSql(ward, [district], transactionSuccess, transactionError);
+
+        function transactionSuccess(tx, result) {
+            var errorMessage = 'Acc not found.';
+            var ward = errorMessage;
+
+            if (result.rows[0] != null) {
+                log(`Get details of accommodation '${id}' successfully.`);
+                ward = result.rows[0].Ward;
+            }
+            else {
+                log(errorMessage, ERROR);
+
+                $('#page-detail #btn-update').addClass('ui-disabled');
+                $('#page-detail #btn-delete-confirm').addClass('ui-disabled');
+            }  
+        }
+        var wardSelected=$('#page-detail #ward').val();
+        console.log('value la'+wardSelected);
+
+        tx.executeSql(query, [id], transactionSuccess, transactionError);
+        
+        function transactionSuccess(tx, result) {
+            var optionList=`<option value='-1'>Select Ward</option>`;
+            
+            for (let item of result.rows){
+                    optionList+= `<option value='${item.Id}' ${item.Name==wardSelected ? 'selected':''}>${item.Name}</option>`;
+                    console.log(item)
+            }
+
+            $(`${form} #ward`).html(optionList);
+            $(`${form} #ward`).selectmenu('refresh', true);
+        }
+    });
+}
